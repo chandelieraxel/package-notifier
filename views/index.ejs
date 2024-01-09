@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Feed Changes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            color: #555;
+        }
+
+        h3 {
+            color: #777;
+        }
+
+        div {
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        hr {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>RSS Feed Changes</h1>
+
+    <div>
+        <h2>Feed Information</h2>
+        <p><strong>Title:</strong> Test title !</p>
+        <p><strong>Description:</strong> A feed update on libraries</p>
+    </div>
+
+    <hr>
+
+    <div>
+        <h2>Feed Items</h2>
+
+        <% feedItems.forEach(item=> { %>
+            <div>
+                <h3>
+                    <%= item.title %>
+                </h3>
+                <p>
+                    <%= item.description %>
+                </p>
+                <p><strong>Publication Date:</strong>
+                    <%= item.pubDate %>
+                </p>
+            </div>
+            <% }); %>
+    </div>
+</body>
+
+</html>

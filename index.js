@@ -4,6 +4,8 @@ import axios from 'axios';
 import express from 'express';
 import { CronJob } from 'cron';
 import RSS from 'rss';
+import ejs from 'ejs';
+
 const writeFileAsync = promisify(fs.writeFile);
 
 const npmRegistryDomain = 'https://registry.npmjs.org';
@@ -40,7 +42,7 @@ const dictionnary = {
 
 const libraryWatch = ['mongoose', 'node'];
 
-async function analyseLibrary(libraryName, rss) {
+async function analyseLibrary(libraryName, rss, arrayOfUpdates) {
     const { data } = await api.get(`/${libraryName}`);
 
     /**
@@ -70,13 +72,13 @@ async function analyseLibrary(libraryName, rss) {
         dictionnary[packageName] = packageTags;
     }
     for (const upd of updates) {
-        // await slackNotifier(upd.description);
         rss.item({
             date: new Date(),
             description: upd.description,
             title: `${upd.libraryName} update !`,
-            url: 'none',
+            url: 'https://rss-2.adaptable.app',
         });
+        arrayOfUpdates.push({ title: `${upd.libraryName} update !`, description: upd.description, pubDate: new Date() });
     }
 }
 
@@ -84,11 +86,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static('public'));
+// Set EJS as the view engine
+app.set('view engine', 'ejs');
+app.set('views', 'views');
+let updatesTotal = [];
 
 new CronJob(
-    '* * 1 * *', // cronTime
+    '* * * * *', // cronTime
     async function () {
         console.log('trigger');
+        // const updatesCount = updates.length;
         const feed = new RSS({
             title: 'Test title !',
             description: 'A feed update on libraries',
@@ -97,10 +104,11 @@ new CronJob(
         });
 
         for (const libraryName of libraryWatch) {
-            await analyseLibrary(libraryName, feed);
+            await analyseLibrary(libraryName, feed, updatesTotal);
         }
 
         const xml = feed.xml({ indent: true });
+
         if (!fs.existsSync('./public')) {
             fs.mkdirSync('./public');
         }
@@ -109,5 +117,9 @@ new CronJob(
     null, // onComplete
     true // start
 );
+
+app.get('/', (req, res) => {
+    res.render('index.ejs', { feedItems: updatesTotal });
+});
 
 app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
