@@ -6,14 +6,13 @@ import RSS from 'rss';
 const feed = new RSS({ title: 'Test title !', feed_url: 'none', site_url: 'none' });
 
 // Read a token from the environment variables
-const token = 'xoxb-4602764007621-5915942455060-MT5KLoZMzYHfIiCe5N2bHztU';
 const channels = {
     'front-app': 'C05S8UT4HJT',
     aleatoire: 'C04HQNG2K5K',
 };
 
 // Initialize
-const web = new WebClient(token);
+// const web = new WebClient(token);
 // let baseLine = new Date(2024, 0, 1);
 const npmRegistryDomain = 'https://registry.npmjs.org';
 const api = axios.create({
@@ -80,15 +79,15 @@ async function analyseLibrary(libraryName) {
     }
     for (const upd of updates) {
         // await slackNotifier(upd.description);
-        // feed.item({
-        //     date: new Date(),
-        //     description: upd.description,
-        //     title: `${upd.libraryName} update !`,
-        //     url: 'none',
-        // });
+        feed.item({
+            date: new Date(),
+            description: upd.description,
+            title: `${upd.libraryName} update !`,
+            url: 'none',
+        });
     }
-    // const xml = feed.xml({ indent: true });
-    // console.log('index.js line 73 ----> xml', xml);
+    const xml = feed.xml({ indent: true });
+    console.log('index.js line 73 ----> xml', xml);
 }
 
 async function slackNotifier(text, id = 'front-app') {
