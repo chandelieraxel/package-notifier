@@ -92,8 +92,8 @@ new CronJob(
         const feed = new RSS({
             title: 'Test title !',
             description: 'A feed update on libraries',
-            feed_url: 'none',
-            site_url: 'none',
+            feed_url: 'https://rss-2.adaptable.app/rss.xml',
+            site_url: 'https://rss-2.adaptable.app/',
         });
 
         for (const libraryName of libraryWatch) {
