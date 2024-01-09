@@ -75,7 +75,7 @@ async function analyseLibrary(libraryName, rss, arrayOfUpdates) {
         rss.item({
             date: new Date(),
             description: upd.description,
-            title: `${upd.libraryName} update !`,
+            title: upd.description,
             url: 'https://rss-2.adaptable.app',
         });
         arrayOfUpdates.push({ title: `${upd.libraryName} update !`, description: upd.description, pubDate: new Date() });
@@ -92,7 +92,7 @@ app.set('views', 'views');
 let updatesTotal = [];
 
 new CronJob(
-    '* * * * *', // cronTime
+    '* * 1 * *', // cronTime
     async function () {
         console.log('trigger');
         // const updatesCount = updates.length;
