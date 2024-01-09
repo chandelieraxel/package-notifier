@@ -92,9 +92,9 @@ app.set('views', 'views');
 let updatesTotal = [];
 
 new CronJob(
-    '* * 1 * *', // cronTime
+    '1 * * * *', // cronTime
     async function () {
-        console.log('trigger');
+        console.log('trigger ', new Date().toISOString());
         // const updatesCount = updates.length;
         const feed = new RSS({
             title: 'Test title !',
