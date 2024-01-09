@@ -1,19 +1,11 @@
-import { WebClient } from '@slack/web-api';
+import fs from 'fs';
+import { promisify } from 'util';
 import axios from 'axios';
+import express from 'express';
 import { CronJob } from 'cron';
 import RSS from 'rss';
+const writeFileAsync = promisify(fs.writeFile);
 
-const feed = new RSS({ title: 'Test title !', feed_url: 'none', site_url: 'none' });
-
-// Read a token from the environment variables
-const channels = {
-    'front-app': 'C05S8UT4HJT',
-    aleatoire: 'C04HQNG2K5K',
-};
-
-// Initialize
-// const web = new WebClient(token);
-// let baseLine = new Date(2024, 0, 1);
 const npmRegistryDomain = 'https://registry.npmjs.org';
 const api = axios.create({
     baseURL: npmRegistryDomain,
@@ -46,11 +38,11 @@ const dictionnary = {
     },
 };
 
-const libraryWatch = ['mongoose'];
+const libraryWatch = ['mongoose', 'node'];
 
-async function analyseLibrary(libraryName) {
+async function analyseLibrary(libraryName, rss) {
     const { data } = await api.get(`/${libraryName}`);
-    console.log('Fetching');
+
     /**
      * Also contain a list of all versions as keys, and release date string as values
      * @type {{modified: string, created: string}} */
@@ -79,80 +71,43 @@ async function analyseLibrary(libraryName) {
     }
     for (const upd of updates) {
         // await slackNotifier(upd.description);
-        feed.item({
+        rss.item({
             date: new Date(),
             description: upd.description,
             title: `${upd.libraryName} update !`,
             url: 'none',
         });
     }
-    const xml = feed.xml({ indent: true });
-    console.log('index.js line 73 ----> xml', xml);
 }
 
-async function slackNotifier(text, id = 'front-app') {
-    const channel = channels[id];
-    if (!channel) {
-        console.warn('channel not defined', channel);
-        return;
-    }
+const app = express();
+const PORT = 3000;
 
-    try {
-        const result = await web.chat.postMessage({ text, channel });
-    } catch (error) {
-        console.log('index.js line 104 ----> error', error);
-        console.error('Slack failed to write to channel', text, channel);
-    }
-}
-await analyseLibrary('mongoose');
+app.use(express.static('public'));
 
-// const job = new CronJob(
-//     '* * * * *', // cronTime
-//     async function () {
-//         console.log('trigger');
-//         for (const libraryName of libraryWatch) {
-//             await analyseLibrary(libraryName);
-//         }
-//     }, // onTick
-//     null, // onComplete
-//     true // start
-// );
+new CronJob(
+    '* * * * *', // cronTime
+    async function () {
+        console.log('trigger');
+        const feed = new RSS({
+            title: 'Test title !',
+            description: 'A feed update on libraries',
+            feed_url: 'none',
+            site_url: 'none',
+        });
 
-// (async () => {
-//     const { data } = await api.get('/mongoose');
+        for (const libraryName of libraryWatch) {
+            await analyseLibrary(libraryName, feed);
+        }
 
-//     // console.log(JSON.stringify(data));
-//     /**
-//      * Also contain a list of all versions as keys, and release date string as values
-//      * @type {{modified: string, created: string}} */
-//     // const versions = data.time;
-//     // const latestPackageVersion = data['dist-tags'].latest;
-//     const packageTags = data['dist-tags'];
-//     const packageName = data._id;
+        const xml = feed.xml({ indent: true });
+        if (!fs.existsSync('./public')) {
+            fs.mkdirSync('./public');
+        }
+        await writeFileAsync('./public' + '/rss.xml', xml);
+    }, // onTick
+    null, // onComplete
+    true // start
+);
 
-//     // Init
-//     if (!dictionnary[packageName]) {
-//         dictionnary[packageName] = packageTags;
-//     } else {
-//         for (const tag in packageTags) {
-//             if (packageTags[tag] !== dictionnary[packageName][tag]) {
-//                 console.info(`[${packageName}] Tag "${tag}" update : ${dictionnary[packageName][tag]} -> ${packageTags[tag]}`);
-//             }
-//         }
-
-//         dictionnary[packageName] = packageTags;
-//     }
-
-//     // if (new Date(versions.modified).getTime() > baseLine.getTime()) {
-//     //     for (const version in versions) {
-//     //         // Skip metadata
-//     //         if (version !== 'modified' && version !== 'created') {
-//     //             if (new Date(versions[version]).getTime() > baseLine.getTime()) {
-//     //                 console.info(`[${packageName}] New version : ${version} / ${latestPackageVersion}`);
-//     //             }
-//     //         }
-//     //     }
-//     // }
-
-//     // baseLine = new Date();
-// })();
+app.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
