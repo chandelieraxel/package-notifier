@@ -86,7 +86,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 
 new CronJob(
-    '* * * * *', // cronTime
+    '* * 1 * *', // cronTime
     async function () {
         console.log('trigger');
         const feed = new RSS({
