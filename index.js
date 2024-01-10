@@ -4,7 +4,6 @@ import axios from 'axios';
 import express from 'express';
 import { CronJob } from 'cron';
 import RSS from 'rss';
-import ejs from 'ejs';
 
 const writeFileAsync = promisify(fs.writeFile);
 
@@ -40,7 +39,7 @@ const dictionnary = {
     },
 };
 
-const libraryWatch = ['mongoose', 'node'];
+const libraryWatch = ['mongoose', 'node', 'jest', 'joi', 'express'];
 
 async function analyseLibrary(libraryName, rss, arrayOfUpdates) {
     const { data } = await api.get(`/${libraryName}`);
@@ -91,17 +90,17 @@ app.set('view engine', 'ejs');
 app.set('views', 'views');
 let updatesTotal = [];
 
+const feed = new RSS({
+    title: 'Test title !',
+    description: 'A feed update on libraries',
+    feed_url: 'https://rss-2.adaptable.app/rss.xml',
+    site_url: 'https://rss-2.adaptable.app/',
+});
+
 new CronJob(
-    '1 * * * *', // cronTime
+    '*/1 * * * *',
     async function () {
-        console.log('trigger ', new Date().toISOString());
-        // const updatesCount = updates.length;
-        const feed = new RSS({
-            title: 'Test title !',
-            description: 'A feed update on libraries',
-            feed_url: 'https://rss-2.adaptable.app/rss.xml',
-            site_url: 'https://rss-2.adaptable.app/',
-        });
+        console.log('Checking updates ... ', new Date().toISOString());
 
         for (const libraryName of libraryWatch) {
             await analyseLibrary(libraryName, feed, updatesTotal);
@@ -110,15 +109,19 @@ new CronJob(
         const xml = feed.xml({ indent: true });
 
         if (!fs.existsSync('./public')) {
+            console.info('Public directory was missing, creating it');
             fs.mkdirSync('./public');
+            console.info('Public directory is created');
         }
+        console.log('Analysis is done, writing to RSS file ...');
         await writeFileAsync('./public' + '/rss.xml', xml);
+        console.info('RSS file is ready');
     }, // onTick
     null, // onComplete
     true // start
 );
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
     res.render('index.ejs', { feedItems: updatesTotal });
 });
 
