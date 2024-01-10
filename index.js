@@ -98,7 +98,7 @@ const feed = new RSS({
 });
 
 new CronJob(
-    '*/1 * * * *',
+    '*/5 * * * *',
     async function () {
         console.log('Checking updates ... ', new Date().toISOString());
 
